@@ -8,7 +8,6 @@ import {
   MenuItem,
   Button,
   Stack,
-  Alert,
   CircularProgress,
   Divider,
   Typography,
@@ -68,10 +67,8 @@ export function EventModal({
 }: EventModalProps) {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [newParticipantEmail, setNewParticipantEmail] = useState("");
-  const [participantError, setParticipantError] = useState<string | null>(null);
   const [editingParticipantId, setEditingParticipantId] = useState<
     string | null
   >(null);
@@ -87,7 +84,6 @@ export function EventModal({
 
     const loadEvent = async () => {
       setLoading(true);
-      setError(null);
 
       try {
         const data: EventDetail = await fetchEvent(eventId);
@@ -102,7 +98,6 @@ export function EventModal({
         });
         setParticipants(data.participants);
       } catch {
-        if (!cancelled) setError("Nem sikerült betölteni az eseményt.");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -117,12 +112,10 @@ export function EventModal({
 
   const handleSave = async () => {
     if (!form.title || !form.location || !form.startDate || !form.endDate) {
-      setError("Minden mező kitöltése kötelező.");
       return;
     }
 
     setLoading(true);
-    setError(null);
 
     const payload: CreateEventPayload = {
       title: form.title,
@@ -140,7 +133,6 @@ export function EventModal({
       onSaved();
       onClose();
     } catch {
-      setError("Nem sikerült menteni az eseményt.");
     } finally {
       setLoading(false);
     }
@@ -150,14 +142,12 @@ export function EventModal({
     if (!eventId) return;
 
     setLoading(true);
-    setError(null);
 
     try {
       await publishEvent(eventId);
       onSaved();
       onClose();
     } catch {
-      setError("Nem sikerült publikálni az eseményt.");
     } finally {
       setLoading(false);
     }
@@ -167,14 +157,12 @@ export function EventModal({
     if (!eventId) return;
 
     setLoading(true);
-    setError(null);
 
     try {
       await deleteEvent(eventId);
       onSaved();
       onClose();
     } catch {
-      setError("Nem sikerült törölni az eseményt.");
     } finally {
       setLoading(false);
     }
@@ -183,8 +171,6 @@ export function EventModal({
   const handleAddParticipant = async () => {
     if (!eventId || !newParticipantEmail.trim()) return;
 
-    setParticipantError(null);
-
     try {
       const participant = await addParticipant(
         eventId,
@@ -192,17 +178,12 @@ export function EventModal({
       );
       setParticipants((prev) => [...prev, participant]);
       setNewParticipantEmail("");
-    } catch {
-      setParticipantError(
-        "Nem sikerült hozzáadni (talán már szerepel az emailcím)."
-      );
-    }
+    } catch {}
   };
 
   const startEditParticipant = (participant: Participant) => {
     setEditingParticipantId(participant.id);
     setEditingEmail(participant.email);
-    setParticipantError(null);
   };
 
   const cancelEditParticipant = () => {
@@ -212,8 +193,6 @@ export function EventModal({
 
   const handleEditParticipant = async () => {
     if (!eventId || !editingParticipantId || !editingEmail.trim()) return;
-
-    setParticipantError(null);
 
     try {
       const updated = await editParticipant(
@@ -225,11 +204,7 @@ export function EventModal({
         prev.map((p) => (p.id === updated.id ? updated : p))
       );
       cancelEditParticipant();
-    } catch {
-      setParticipantError(
-        "Nem sikerült módosítani (talán már szerepel az emailcím)."
-      );
-    }
+    } catch {}
   };
 
   const handleRemoveParticipant = async (participantId: string) => {
@@ -238,9 +213,7 @@ export function EventModal({
     try {
       await removeParticipant(eventId, participantId);
       setParticipants((prev) => prev.filter((p) => p.id !== participantId));
-    } catch {
-      setParticipantError("Nem sikerült eltávolítani a résztvevőt.");
-    }
+    } catch {}
   };
 
   return (
@@ -255,7 +228,6 @@ export function EventModal({
           </Stack>
         ) : (
           <Stack sx={{ gap: 2, pt: 1 }}>
-            {error && <Alert severity="error">{error}</Alert>}
             <TextField
               label="Cím"
               value={form.title}
@@ -298,9 +270,6 @@ export function EventModal({
               <>
                 <Divider sx={{ mt: 1 }} />
                 <Typography variant="subtitle2">Résztvevők</Typography>
-                {participantError && (
-                  <Alert severity="error">{participantError}</Alert>
-                )}
                 <Stack sx={{ gap: 1 }}>
                   {participants.map((p) => (
                     <Stack

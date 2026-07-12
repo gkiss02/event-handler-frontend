@@ -1,0 +1,9 @@
+{
+  "error.event.find_one.event_not_found": "Az esemény nem található.",
+  "error.event.assert_valid_date_range.invalid_date_range": "A kezdés dátuma nem lehet később, mint a befejezésé.",
+  "error.event.assert_no_over_lap.published_event_already_exists": "Ezen a helyszínen már van publikált esemény ebben az időszakban.",
+  "error.event.publish.already_published": "Az esemény már publikálva van.",
+  "error.participant.find_participant_or_fail.participant_not_found": "A résztvevő nem található.",
+  "error.participant.assert_email_not_taken.email_already_added": "Ez az email cím már hozzá van adva ehhez az eseményhez.",
+  "fallback": "Váratlan hiba történt. Próbáld újra."
+}

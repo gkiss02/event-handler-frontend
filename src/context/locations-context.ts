@@ -3,7 +3,6 @@ import { createContext, useContext } from "react";
 export interface LocationsContextValue {
   locations: string[];
   loading: boolean;
-  error: string | null;
 }
 
 export const LocationsContext = createContext<

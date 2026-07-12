@@ -21,7 +21,6 @@ export function CalendarView({ filters }: CalendarViewProps) {
   const theme = useTheme();
   const [events, setEvents] = useState<EventSummary[]>([]);
   const [loading, setLoading] = useState(false);
-  const [, setError] = useState<string | null>(null);
   const currentRange = useRef<{ start: Date; end: Date } | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -30,12 +29,11 @@ export function CalendarView({ filters }: CalendarViewProps) {
   const loadEvents = useCallback(
     async (start: Date, end: Date) => {
       setLoading(true);
-      setError(null);
+
       try {
         const data = await fetchEvents(start, end, filters);
         setEvents(data);
       } catch {
-        setError("Nem sikerült betölteni az eseményeket.");
       } finally {
         setLoading(false);
       }

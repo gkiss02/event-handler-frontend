@@ -4,6 +4,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { hu } from "date-fns/locale";
 import App from "./App";
+import "./i18n";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

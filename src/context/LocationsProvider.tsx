@@ -5,7 +5,6 @@ import { LocationsContext } from "./locations-context";
 export function LocationsProvider({ children }: { children: ReactNode }) {
   const [locations, setLocations] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -15,7 +14,6 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
         const data = await fetchLocations();
         if (!cancelled) setLocations(data);
       } catch {
-        if (!cancelled) setError("Nem sikerült betölteni a helyszíneket.");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -29,7 +27,7 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <LocationsContext.Provider value={{ locations, loading, error }}>
+    <LocationsContext.Provider value={{ locations, loading }}>
       {children}
     </LocationsContext.Provider>
   );
