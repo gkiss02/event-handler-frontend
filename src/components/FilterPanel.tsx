@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import {
   Box,
   FormControl,
@@ -8,7 +7,7 @@ import {
   type SelectChangeEvent,
 } from "@mui/material";
 import { EventStatus, type EventFilters } from "../types/event.types";
-import { fetchLocations } from "../api/eventApi";
+import { useLocations } from "../context/locations-context";
 
 interface FilterPanelProps {
   filters: EventFilters;
@@ -16,16 +15,7 @@ interface FilterPanelProps {
 }
 
 export function FilterPanel({ filters, onChange }: FilterPanelProps) {
-  const [locations, setLocations] = useState<string[]>([]);
-
-  useEffect(() => {
-    const loadLocations = async () => {
-      const data = await fetchLocations();
-      setLocations(data);
-    };
-
-    loadLocations();
-  }, []);
+  const { locations } = useLocations();
 
   const handleStatusChange = (event: SelectChangeEvent) => {
     const value = event.target.value;
