@@ -76,7 +76,7 @@ function isValidEmail(value: string): boolean {
 
 export function EventModal({
   open,
-  eventId,
+  eventId: eventIdProp,
   onClose,
   onSaved,
 }: EventModalProps) {
@@ -92,7 +92,9 @@ export function EventModal({
   const [editingEmail, setEditingEmail] = useState("");
   const [editingEmailError, setEditingEmailError] = useState(false);
   const { locations } = useLocations();
+  const [createdEventId, setCreatedEventId] = useState<string | null>(null);
 
+  const eventId = eventIdProp ?? createdEventId;
   const isEditMode = Boolean(eventId);
 
   useEffect(() => {
@@ -164,11 +166,13 @@ export function EventModal({
     try {
       if (isEditMode && eventId) {
         await updateEvent(eventId, payload);
+        onSaved();
+        onClose();
       } else {
-        await createEvent(payload);
+        const created = await createEvent(payload);
+        setCreatedEventId(created.id);
+        onSaved();
       }
-      onSaved();
-      onClose();
     } catch {
     } finally {
       setLoading(false);
