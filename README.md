@@ -42,10 +42,4 @@ npm run dev
 
 A frontend alapértelmezetten a `http://localhost:5173` címen fut.
 
-## Hasznos parancsok
 
-| Parancs         | Leírás                                |
-| --------------- | ------------------------------------- |
-| `npm run dev`   | Alkalmazás indítása fejlesztői módban |
-| `npm run build` | Production build                      |
-| `npm run lint`  | ESLint futtatása                      |
