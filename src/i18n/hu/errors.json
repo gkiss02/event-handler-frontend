@@ -1,6 +1,6 @@
 {
   "error.event.find_one.event_not_found": "Az esemény nem található.",
-  "error.event.assert_valid_date_range.invalid_date_range": "A kezdés dátuma nem lehet később, mint a befejezésé.",
+  "error.event.assert_valid_date_range.invalid_date_range": "A befejezés dátumának a kezdés dátuma után kell lennie.",
   "error.event.assert_no_over_lap.published_event_already_exists": "Ezen a helyszínen már van publikált esemény ebben az időszakban.",
   "error.event.publish.already_published": "Az esemény már publikálva van.",
   "error.participant.find_participant_or_fail.participant_not_found": "A résztvevő nem található.",

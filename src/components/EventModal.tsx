@@ -133,7 +133,7 @@ export function EventModal({
     const dateRangeInvalid =
       form.startDate !== null &&
       form.endDate !== null &&
-      form.startDate.getTime() > form.endDate.getTime();
+      form.startDate.getTime() >= form.endDate.getTime();
 
     const errors: FieldErrors = {
       title: !form.title.trim(),
@@ -356,7 +356,7 @@ export function EventModal({
             />
             {fieldErrors.dateRange && (
               <Alert severity="error">
-                A kezdés dátuma nem lehet később, mint a befejezésé.
+                A befejezés dátumának a kezdés dátuma után kell lennie.
               </Alert>
             )}
 
