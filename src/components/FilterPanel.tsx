@@ -19,7 +19,12 @@ export function FilterPanel({ filters, onChange }: FilterPanelProps) {
   const [locations, setLocations] = useState<string[]>([]);
 
   useEffect(() => {
-    void fetchLocations().then(setLocations);
+    const loadLocations = async () => {
+      const data = await fetchLocations();
+      setLocations(data);
+    };
+
+    loadLocations();
   }, []);
 
   const handleStatusChange = (event: SelectChangeEvent) => {

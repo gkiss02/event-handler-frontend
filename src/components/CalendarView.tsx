@@ -43,7 +43,7 @@ export function CalendarView({ filters }: CalendarViewProps) {
 
   const handleDatesSet = (arg: DatesSetArg) => {
     currentRange.current = { start: arg.start, end: arg.end };
-    void loadEvents(arg.start, arg.end);
+    loadEvents(arg.start, arg.end);
   };
 
   const handleEventClick = (arg: EventClickArg) => {
@@ -60,7 +60,7 @@ export function CalendarView({ filters }: CalendarViewProps) {
 
   const handleSaved = () => {
     if (currentRange.current) {
-      void loadEvents(currentRange.current.start, currentRange.current.end);
+      loadEvents(currentRange.current.start, currentRange.current.end);
     }
   };
 

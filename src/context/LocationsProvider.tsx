@@ -19,7 +19,7 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    void load();
+    load();
 
     return () => {
       cancelled = true;

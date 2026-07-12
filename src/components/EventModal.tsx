@@ -12,6 +12,7 @@ import {
   Divider,
   Typography,
   IconButton,
+  Alert,
 } from "@mui/material";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import {
@@ -51,6 +52,14 @@ interface FormState {
   status: EventStatus;
 }
 
+interface FieldErrors {
+  title?: boolean;
+  location?: boolean;
+  startDate?: boolean;
+  endDate?: boolean;
+  dateRange?: boolean;
+}
+
 const emptyForm: FormState = {
   title: "",
   location: "",
@@ -59,6 +68,12 @@ const emptyForm: FormState = {
   status: EventStatus.DRAFT,
 };
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function isValidEmail(value: string): boolean {
+  return EMAIL_REGEX.test(value.trim());
+}
+
 export function EventModal({
   open,
   eventId,
@@ -66,13 +81,16 @@ export function EventModal({
   onSaved,
 }: EventModalProps) {
   const [form, setForm] = useState<FormState>(emptyForm);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [newParticipantEmail, setNewParticipantEmail] = useState("");
+  const [newParticipantError, setNewParticipantError] = useState(false);
   const [editingParticipantId, setEditingParticipantId] = useState<
     string | null
   >(null);
   const [editingEmail, setEditingEmail] = useState("");
+  const [editingEmailError, setEditingEmailError] = useState(false);
   const { locations } = useLocations();
 
   const isEditMode = Boolean(eventId);
@@ -97,23 +115,42 @@ export function EventModal({
           status: data.status,
         });
         setParticipants(data.participants);
+        setFieldErrors({});
       } catch {
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
 
-    void loadEvent();
+    loadEvent();
 
     return () => {
       cancelled = true;
     };
   }, [open, eventId]);
 
+  const validateForm = (): boolean => {
+    const dateRangeInvalid =
+      form.startDate !== null &&
+      form.endDate !== null &&
+      form.startDate.getTime() > form.endDate.getTime();
+
+    const errors: FieldErrors = {
+      title: !form.title.trim(),
+      location: !form.location,
+      startDate: !form.startDate,
+      endDate: !form.endDate,
+      dateRange: dateRangeInvalid,
+    };
+
+    setFieldErrors(errors);
+
+    return !Object.values(errors).some(Boolean);
+  };
+
   const handleSave = async () => {
-    if (!form.title || !form.location || !form.startDate || !form.endDate) {
-      return;
-    }
+    if (!validateForm()) return;
+    if (!form.startDate || !form.endDate) return;
 
     setLoading(true);
 
@@ -169,36 +206,50 @@ export function EventModal({
   };
 
   const handleAddParticipant = async () => {
-    if (!eventId || !newParticipantEmail.trim()) return;
+    const email = newParticipantEmail.trim();
+
+    if (!email || !isValidEmail(email)) {
+      setNewParticipantError(true);
+      return;
+    }
+
+    if (!eventId) return;
 
     try {
-      const participant = await addParticipant(
-        eventId,
-        newParticipantEmail.trim()
-      );
+      const participant = await addParticipant(eventId, email);
       setParticipants((prev) => [...prev, participant]);
       setNewParticipantEmail("");
+      setNewParticipantError(false);
     } catch {}
   };
 
   const startEditParticipant = (participant: Participant) => {
     setEditingParticipantId(participant.id);
     setEditingEmail(participant.email);
+    setEditingEmailError(false);
   };
 
   const cancelEditParticipant = () => {
     setEditingParticipantId(null);
     setEditingEmail("");
+    setEditingEmailError(false);
   };
 
   const handleEditParticipant = async () => {
-    if (!eventId || !editingParticipantId || !editingEmail.trim()) return;
+    const email = editingEmail.trim();
+
+    if (!email || !isValidEmail(email)) {
+      setEditingEmailError(true);
+      return;
+    }
+
+    if (!eventId || !editingParticipantId) return;
 
     try {
       const updated = await editParticipant(
         eventId,
         editingParticipantId,
-        editingEmail.trim()
+        email
       );
       setParticipants((prev) =>
         prev.map((p) => (p.id === updated.id ? updated : p))
@@ -231,20 +282,25 @@ export function EventModal({
             <TextField
               label="Cím"
               value={form.title}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, title: e.target.value }))
-              }
+              onChange={(e) => {
+                setForm((f) => ({ ...f, title: e.target.value }));
+                setFieldErrors((errs) => ({ ...errs, title: false }));
+              }}
+              error={Boolean(fieldErrors.title)}
+              helperText={fieldErrors.title ? "A cím megadása kötelező." : " "}
               fullWidth
             />
             <TextField
               select
               label="Helyszín"
               value={form.location}
-              onChange={(e) =>
-                setForm((f) => ({
-                  ...f,
-                  location: e.target.value,
-                }))
+              onChange={(e) => {
+                setForm((f) => ({ ...f, location: e.target.value }));
+                setFieldErrors((errs) => ({ ...errs, location: false }));
+              }}
+              error={Boolean(fieldErrors.location)}
+              helperText={
+                fieldErrors.location ? "A helyszín kiválasztása kötelező." : " "
               }
               fullWidth
             >
@@ -257,15 +313,53 @@ export function EventModal({
             <DateTimePicker
               label="Kezdés"
               value={form.startDate}
-              onChange={(value) => setForm((f) => ({ ...f, startDate: value }))}
+              onChange={(value) => {
+                setForm((f) => ({ ...f, startDate: value }));
+                setFieldErrors((errs) => ({
+                  ...errs,
+                  startDate: false,
+                  dateRange: false,
+                }));
+              }}
               ampm={false}
+              slotProps={{
+                textField: {
+                  error: Boolean(
+                    fieldErrors.startDate || fieldErrors.dateRange
+                  ),
+                  helperText: fieldErrors.startDate
+                    ? "A kezdés megadása kötelező."
+                    : " ",
+                },
+              }}
             />
             <DateTimePicker
               label="Befejezés"
               value={form.endDate}
-              onChange={(value) => setForm((f) => ({ ...f, endDate: value }))}
+              onChange={(value) => {
+                setForm((f) => ({ ...f, endDate: value }));
+                setFieldErrors((errs) => ({
+                  ...errs,
+                  endDate: false,
+                  dateRange: false,
+                }));
+              }}
               ampm={false}
+              slotProps={{
+                textField: {
+                  error: Boolean(fieldErrors.endDate || fieldErrors.dateRange),
+                  helperText: fieldErrors.endDate
+                    ? "A befejezés megadása kötelező."
+                    : " ",
+                },
+              }}
             />
+            {fieldErrors.dateRange && (
+              <Alert severity="error">
+                A kezdés dátuma nem lehet később, mint a befejezésé.
+              </Alert>
+            )}
+
             {isEditMode && (
               <>
                 <Divider sx={{ mt: 1 }} />
@@ -281,14 +375,23 @@ export function EventModal({
                         <>
                           <TextField
                             value={editingEmail}
-                            onChange={(e) => setEditingEmail(e.target.value)}
+                            onChange={(e) => {
+                              setEditingEmail(e.target.value);
+                              setEditingEmailError(false);
+                            }}
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
                                 e.preventDefault();
-                                void handleEditParticipant();
+                                handleEditParticipant();
                               }
                               if (e.key === "Escape") cancelEditParticipant();
                             }}
+                            error={editingEmailError}
+                            helperText={
+                              editingEmailError
+                                ? "Adj meg egy érvényes email címet."
+                                : " "
+                            }
                             size="small"
                             fullWidth
                             autoFocus
@@ -296,7 +399,7 @@ export function EventModal({
                           <IconButton
                             size="small"
                             color="success"
-                            onClick={handleEditParticipant}
+                            onClick={() => handleEditParticipant()}
                           >
                             <CheckIcon fontSize="small" />
                           </IconButton>
@@ -334,21 +437,37 @@ export function EventModal({
                     </Typography>
                   )}
                 </Stack>
-                <Stack direction="row" sx={{ gap: 1 }}>
+                <Stack
+                  direction="row"
+                  sx={{ gap: 1, alignItems: "flex-start" }}
+                >
                   <TextField
                     label="Résztvevő email címe"
                     value={newParticipantEmail}
-                    onChange={(e) => setNewParticipantEmail(e.target.value)}
+                    onChange={(e) => {
+                      setNewParticipantEmail(e.target.value);
+                      setNewParticipantError(false);
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
-                        void handleAddParticipant();
+                        handleAddParticipant();
                       }
                     }}
+                    error={newParticipantError}
+                    helperText={
+                      newParticipantError
+                        ? "Adj meg egy érvényes email címet."
+                        : " "
+                    }
                     fullWidth
                     size="small"
                   />
-                  <Button onClick={handleAddParticipant} variant="outlined">
+                  <Button
+                    onClick={() => handleAddParticipant()}
+                    variant="outlined"
+                    sx={{ mt: 0.25 }}
+                  >
                     Hozzáadás
                   </Button>
                 </Stack>
@@ -361,7 +480,7 @@ export function EventModal({
         <Button onClick={onClose}>Mégse</Button>
         {isEditMode && (
           <Button
-            onClick={handleDelete}
+            onClick={() => handleDelete()}
             variant="outlined"
             color="error"
             disabled={loading}
@@ -371,7 +490,7 @@ export function EventModal({
         )}
         {isEditMode && form.status === EventStatus.DRAFT && (
           <Button
-            onClick={handlePublish}
+            onClick={() => handlePublish()}
             variant="outlined"
             color="success"
             disabled={loading}
@@ -379,7 +498,11 @@ export function EventModal({
             Publikálás
           </Button>
         )}
-        <Button onClick={handleSave} variant="contained" disabled={loading}>
+        <Button
+          onClick={() => handleSave()}
+          variant="contained"
+          disabled={loading}
+        >
           Mentés
         </Button>
       </DialogActions>
