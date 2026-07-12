@@ -180,11 +180,20 @@ export function EventModal({
   };
 
   const handlePublish = async () => {
-    if (!eventId) return;
+    if (!validateForm()) return;
+    if (!form.startDate || !form.endDate || !eventId) return;
 
     setLoading(true);
 
+    const payload: CreateEventPayload = {
+      title: form.title,
+      location: form.location,
+      startDate: form.startDate.toISOString(),
+      endDate: form.endDate.toISOString(),
+    };
+
     try {
+      await updateEvent(eventId, payload);
       await publishEvent(eventId);
       onSaved();
       onClose();
