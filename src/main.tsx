@@ -1,4 +1,3 @@
-// main.tsx
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
